@@ -1,0 +1,35 @@
+<html>
+<head>
+    {% if title %}
+        <title>{{ title }} - ftp</title>
+    {% else %}
+        <title>ftp</title>
+    {% endif %}
+</head>
+<body>
+<div>
+    ftp:
+    <a href="/">主页</a>
+    {% if up %}
+        <a href={{ up }}>向上</a>
+    {% endif %}
+</div>
+<hr>
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endwith %}
+{% if dirList %}
+    <ul>
+        {% for filename in dirList %}
+            <li><a href={{ Path }}{{ filename }}>{{ filename }}</a></li>
+        {% endfor %}
+    </ul>
+{% endif %}
+</body>
+</html>
