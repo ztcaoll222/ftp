@@ -9,7 +9,8 @@
 <body>
 <div>
     ftp:
-    <a href="/">主页</a>
+    <a href="/ftp">主页</a>
+    <a href="/upload">上传</a>
     {% if up %}
         <a href={{ up }}>向上</a>
     {% endif %}
@@ -24,6 +25,13 @@
         </ul>
     {% endif %}
 {% endwith %}
+{% if upload %}
+    <form action="" method=post enctype=multipart/form-data>
+    <p><input type=file name=file>
+        <input type=submit value=Upload>
+    </p>
+</form>
+{% endif %}
 {% if dirList %}
     <ul>
         {% for filename in dirList %}
