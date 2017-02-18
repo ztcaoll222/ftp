@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
     {% if title %}
@@ -11,11 +12,14 @@
     ftp:
     <a href="/ftp">主页</a>
     <a href="/upload">上传</a>
+
     {% if up %}
-        <a href={{ up }}>向上</a>
+        <a href=/ftp/{{ up }}>向上</a>
     {% endif %}
+
 </div>
 <hr>
+
 {% with messages = get_flashed_messages() %}
     {% if messages %}
         <ul>
@@ -25,19 +29,74 @@
         </ul>
     {% endif %}
 {% endwith %}
+
 {% if upload %}
-    <form action="" method=post enctype=multipart/form-data>
-    <p><input type=file name=file>
-        <input type=submit value=Upload>
-    </p>
-</form>
+    <script>
+        function UpladFile() {
+            // 获取文件对象
+            var fileObj = document.getElementById("file").files[0];
+            // 接收上传文件的后台地址
+            var FileController = "/upload";
+            // FormData 对象
+            var form = new FormData();
+            // 文件对象
+            form.append("file", fileObj);
+            // XMLHttpRequest 对象
+            var xhr = new XMLHttpRequest();
+            xhr.open("post", FileController, true);
+            xhr.onload = function () {
+                //   console.log("上传完成!");
+            };
+            xhr.upload.addEventListener("progress", progressFunction, false);
+            xhr.send(form);
+        }
+        function progressFunction(evt) {
+            var progressBar = document.getElementById("progressBar");
+            var percentageDiv = document.getElementById("percentage");
+            if (evt.lengthComputable) {
+                progressBar.max = evt.total;
+                progressBar.value = evt.loaded;
+                percentageDiv.innerHTML = Math.round(evt.loaded / evt.total * 100) + "%";
+            }
+        }
+    </script>
+    <form action="/upload" method=post enctype=multipart/form-data>
+        <input type=file id="file" name=浏览>
+        <p>
+            <input type=button onclick="UpladFile()" value=上传>
+            <progress id="progressBar" value="0" max="100"></progress>
+        </p>
+    </form>
 {% endif %}
-{% if dirList %}
-    <ul>
-        {% for filename in dirList %}
-            <li><a href={{ Path }}{{ filename }}>{{ filename }}</a></li>
+
+<form>
+    {% if fileList %}
+        {% for filename in fileList %}
+            <label>
+                <input type="checkbox" value="{{ filename }}" name="{{ filename }}">
+                <a target="" href=/ftp/{{ path }}{{ filename }}>{{ filename }}</a>
+                <br>
+            </label>
         {% endfor %}
-    </ul>
-{% endif %}
+    {% endif %}
+    <hr>
+
+    {% if isCopy %}
+        <input type=submit value=复制到... formaction="/paste" formmethod="post" name="copy">
+        <input type=submit value=取消 formaction="/cancel" formmethod="post" name="cancel">
+    {% else %}
+        <input type=submit value=复制 formaction="/copy" formmethod="post" name="copy">
+    {% endif %}
+
+    {% if isMov %}
+        <input type=submit value=移动到... formaction="/paste" formmethod="post" name="mov">
+        <input type=submit value=取消 formaction="/cancel" formmethod="post" name="cancel">
+    {% else %}
+        <input type=submit value=移动 formaction="/mov" formmethod="post" name="mov">
+    {% endif %}
+
+    <input type=submit value=删除 formaction="/del" formmethod="post" name="del">
+</form>
+
 </body>
 </html>
