@@ -36,11 +36,6 @@ def dir_list(path):
     return [x for x in os.listdir(path)]
 
 
-def file_pop():
-    session.pop('filePrePath', False)
-    session.pop('fileList', False)
-
-
 SECRET_KEY = 'SECRET_KEY'
 CURRENT_DIR = os.getcwd()
 
@@ -70,15 +65,23 @@ def ftp_of_no_variable_get():
     isUpload = session.get('isUpload', False)
     session.pop('isUpload', False)
 
+    isCreateDir = session.get('isCreateDir', False)
+    session.pop('isCreateDir', False)
+
+    isCreateFile = session.get('isCreateFile', False)
+    session.pop('isCreateFile', False)
+
     isCopy = session.get('isCopy', False)
-    # session.pop('isCopy', False)
 
     isMov = session.get('isMov', False)
-    # session.pop('isMov', False)
+
 
     return render_template('base.html',
                            title = currentPath,
+                           flashPath=currentPath,
                            upload = isUpload,
+                           isCreateDir = isCreateDir,
+                           isCreateFile=isCreateFile,
                            path = currentPath,
                            fileList = fileList,
                            isCopy = isCopy,
@@ -90,6 +93,19 @@ def ftp_of_variable_get(path):
     currentPath = path
     session['currentPath'] = currentPath
     path = os.path.join(CURRENT_DIR, currentPath)
+
+    isUpload = session.get('isUpload', False)
+    session.pop('isUpload', False)
+
+    isCreateDir = session.get('isCreateDir', False)
+    session.pop('isCreateDir', False)
+
+    isCreateFile = session.get('isCreateFile', False)
+    session.pop('isCreateFile', False)
+
+    isCopy = session.get('isCopy', False)
+
+    isMov = session.get('isMov', False)
 
     if os.path.isfile(path):
         format = os.path.splitext(path)[1]
@@ -134,20 +150,14 @@ def ftp_of_variable_get(path):
     up.pop(-1)
     up = '/'.join(up)
 
-    isUpload = session.get('isUpload', False)
-    session.pop('isUpload', False)
-
-    isCopy = session.get('isCopy', False)
-    # session.pop('isCopy', False)
-
-    isMov = session.get('isMov', False)
-    # session.pop('isMov', False)
-
     return render_template('base.html',
                            title=currentPath,
                            up = up,
+                           flashPath = currentPath,
                            upload=isUpload,
-                           path = currentPath+'/',
+                           isCreateDir = isCreateDir,
+                           isCreateFile = isCreateFile,
+                           path = currentPath + '/',
                            fileList = fileList,
                            isCopy = isCopy,
                            isMov = isMov)
@@ -155,8 +165,9 @@ def ftp_of_variable_get(path):
 
 @app.route('/upload', methods=['GET'])
 def upload_get():
+    currentPath = session['currentPath']
     session['isUpload'] = True
-    return redirect('/ftp/%s' % session['currentPath'])
+    return redirect('/ftp/%s' % currentPath)
 
 
 @app.route('/upload', methods=['POST'])
@@ -169,9 +180,9 @@ def upload_post():
     if file:
         filename = my_secure_filename(filename)
         file.save(os.path.join(currentPath, filename))
-        flash('%s upload success!' % filename)
+        flash('%s 上传成功!' % filename)
     else:
-        flash('%s upload unsuccess!' % filename)
+        flash('%s 上传失败!' % filename)
 
     return redirect('/ftp/%s' % currentPath)
 
@@ -186,12 +197,16 @@ def del_post():
 
     for filename in choice:
         path = os.path.join(currentPath, filename)
-        if os.path.isfile(path):
-            os.remove(path)
-        else:
-            rmtree(path)
+        try:
+            if os.path.isfile(path):
+                os.remove(path)
+            else:
+                rmtree(path)
+            flash("删除%s成功" % path)
+        except:
+            flash("删除%s失败，权限不足或者此文件不存在" % path)
 
-    flash('del %s success!' % choice)
+    flash('删除完成!' % choice)
     return redirect('/ftp/%s' % currentPath)
 
 
@@ -253,7 +268,58 @@ def paste_post():
     session.pop('isCopy', False)
     session.pop('isMov', False)
 
-    flash("%s success!" % fileList)
+    flash("%s 成功!" % fileList)
+
+    return redirect('/ftp/%s' % currentPath)
+
+
+@app.route('/createDir', methods=['GET'])
+def create_dir_get():
+    currentPath = session['currentPath']
+    session['isCreateDir'] = True
+    return redirect('/ftp/%s' % currentPath)
+
+
+@app.route('/createDir', methods=['POST'])
+def create_dir_post():
+    currentPath = session['currentPath']
+    session.pop('isCreateDir', False)
+
+    dirname = request.form['dirname']
+    dirname = my_secure_filename(dirname)
+    path = os.path.join(currentPath, dirname)
+
+    try:
+        os.mkdir(path)
+    except:
+        flash("文件夹已存在或权限不足")
+
+    return redirect('/ftp/%s' % currentPath)
+
+
+@app.route('/createFile', methods=['Get'])
+def create_file_get():
+    currentPath = session['currentPath']
+    session['isCreateFile'] = True
+    return redirect('/ftp/%s' % currentPath)
+
+
+@app.route('/createFile', methods=['POST'])
+def create_file_post():
+    currentPath = session['currentPath']
+    session.pop('isCreateFile', False)
+
+    filetext = request.form['filetext']
+    filename = request.form['filename']
+    if filename:
+        path = os.path.join(currentPath, filename)
+        if not os.path.exists(path):
+            with open(path, 'w') as f:
+                f.write(filetext)
+        else:
+            flash("文件%s已存在" % path)
+    else:
+        flash('请输入文件名!')
 
     return redirect('/ftp/%s' % currentPath)
 
@@ -262,7 +328,8 @@ def paste_post():
 def cancel_post():
     currentPath = session['currentPath']
 
-    file_pop()
+    session.pop('filePrePath', False)
+    session.pop('fileList', False)
     session.pop('isCopy', False)
     session.pop('isMov', False)
 

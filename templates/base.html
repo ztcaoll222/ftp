@@ -11,6 +11,7 @@
 <div>
     ftp:
     <a href="/ftp">主页</a>
+    <a href="/ftp/{{ flashPath }}">刷新</a>
     <a href="/upload">上传</a>
 
     {% if up %}
@@ -69,6 +70,32 @@
     </form>
 {% endif %}
 
+{% if isCreateDir %}
+    <form action="/createDir" method="post">
+        <label>
+            <input type="text" name="dirname">
+            <input type="submit" name="s_dir_name">
+        </label>
+    </form>
+{% endif %}
+
+{% if isCreateFile %}
+    <form action="/createFile" method="post">
+        <label>
+            请输入文本:
+            <br>
+            <textarea name="filetext"></textarea>
+        </label>
+        <br>
+        <label>
+            请输入文件名:
+            <br>
+            <input type="text" name="filename">
+            <input type="submit" name="submit_file_name_text">
+        </label>
+    </form>
+{% endif %}
+
 <form>
     {% if fileList %}
         {% for filename in fileList %}
@@ -81,6 +108,8 @@
     {% endif %}
     <hr>
 
+    <input type=submit value=新建文件夹 formaction="/createDir" formmethod="get" name="createDir">
+    <input type=submit value=新建文件 formaction="/createFile" formmethod="get" name="createFile">
     {% if isCopy %}
         <input type=submit value=复制到... formaction="/paste" formmethod="post" name="copy">
         <input type=submit value=取消 formaction="/cancel" formmethod="post" name="cancel">
