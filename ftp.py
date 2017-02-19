@@ -58,7 +58,6 @@ def home_of_no_variable_get():
 @app.route('/ftp/', methods=['GET'])
 def ftp_of_no_variable_get():
     currentPath = ''
-    session['currentPath'] = currentPath
     path = os.path.join(CURRENT_DIR, currentPath)
 
     fileList = dir_list(path)
@@ -76,6 +75,7 @@ def ftp_of_no_variable_get():
 
     isMov = session.get('isMov', False)
 
+    session['currentPath'] = currentPath
 
     return render_template('base.html',
                            title = currentPath,
@@ -92,7 +92,6 @@ def ftp_of_no_variable_get():
 @app.route('/ftp/<path:path>', methods=['GET'])
 def ftp_of_variable_get(path):
     currentPath = path
-    session['currentPath'] = currentPath
     path = os.path.join(CURRENT_DIR, currentPath)
 
     isUpload = session.get('isUpload', False)
@@ -145,6 +144,8 @@ def ftp_of_variable_get(path):
                                    os.path.split(path)[1],
                                    as_attachment=True)
 
+
+    session['currentPath'] = currentPath
     fileList = dir_list(path)
 
     up = currentPath.split('/')
