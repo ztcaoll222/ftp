@@ -10,14 +10,13 @@
 <body>
 <div>
     ftp:
-    <a href="/ftp">主页</a>
+    <a href="/ftp/">主页</a>
     <a href="/ftp/{{ flashPath }}">刷新</a>
     <a href="/upload">上传</a>
-
-    {% if up %}
-        <a href=/ftp/{{ up }}>向上</a>
-    {% endif %}
-
+    <a href="/upPath">向上</a>
+    <a href="/prePath">后退</a>
+    <a href="/nextPath">前进</a>
+    <a href="/search">搜索文件</a>
 </div>
 <hr>
 
@@ -31,7 +30,7 @@
     {% endif %}
 {% endwith %}
 
-{% if upload %}
+{% if isUpload %}
     <script>
         function UpladFile() {
             // 获取文件对象
@@ -66,7 +65,18 @@
         <p>
             <input type=button onclick="UpladFile()" value=上传>
             <progress id="progressBar" value="0" max="100"></progress>
+            <input type=submit value=取消 formaction="/cancel" formmethod="post" name="cancel">
         </p>
+    </form>
+{% endif %}
+
+{% if isSearch %}
+    <form action="/search" method="post">
+        <label>
+            <input type="text" name="search_text">
+            <input type="submit" value="搜索" name="s_search_text">
+            <input type=submit value=取消 formaction="/cancel" formmethod="post" name="cancel">
+        </label>
     </form>
 {% endif %}
 
@@ -75,6 +85,7 @@
         <label>
             <input type="text" name="dirname">
             <input type="submit" name="s_dir_name">
+            <input type=submit value=取消 formaction="/cancel" formmethod="post" name="cancel">
         </label>
     </form>
 {% endif %}
@@ -92,8 +103,21 @@
             <br>
             <input type="text" name="filename">
             <input type="submit" name="submit_file_name_text">
+            <input type=submit value=取消 formaction="/cancel" formmethod="post" name="cancel">
         </label>
     </form>
+{% endif %}
+
+{% if searchRes %}
+    <ul>
+        <li>开始搜索..</li>
+        {% for filepath in  searchRes%}
+            <li>
+                <a target="" href="/ftp/{{ filepath }}">{{ filepath }}</a>
+            </li>
+        {% endfor %}
+        <li>搜索完成!</li>
+    </ul>
 {% endif %}
 
 <form>
