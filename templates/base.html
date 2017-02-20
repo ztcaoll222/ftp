@@ -16,7 +16,9 @@
     <a href="/upPath">向上</a>
     <a href="/prePath">后退</a>
     <a href="/nextPath">前进</a>
-    <a href="/search">搜索文件</a>
+    <a href="/searchFile">搜索文件</a>
+    <a href="/searchText">搜索文本</a>
+{#    <a href="/clear">clear</a>#}
 </div>
 <hr>
 
@@ -70,8 +72,18 @@
     </form>
 {% endif %}
 
-{% if isSearch %}
-    <form action="/search" method="post">
+{% if isSearchFile %}
+    <form action="/searchFile" method="post">
+        <label>
+            <input type="text" name="search_text">
+            <input type="submit" value="搜索" name="s_search_text">
+            <input type=submit value=取消 formaction="/cancel" formmethod="post" name="cancel">
+        </label>
+    </form>
+{% endif %}
+
+{% if isSearchText %}
+    <form action="/searchText" method="post">
         <label>
             <input type="text" name="search_text">
             <input type="submit" value="搜索" name="s_search_text">
@@ -108,10 +120,22 @@
     </form>
 {% endif %}
 
-{% if searchRes %}
+{% if searchFileRes %}
     <ul>
         <li>开始搜索..</li>
-        {% for filepath in  searchRes%}
+        {% for filepath in  searchFileRes%}
+            <li>
+                <a target="" href="/ftp/{{ filepath }}">{{ filepath }}</a>
+            </li>
+        {% endfor %}
+        <li>搜索完成!</li>
+    </ul>
+{% endif %}
+
+{% if searchTextRes %}
+    <ul>
+        <li>开始搜索..</li>
+        {% for filepath in  searchTextRes%}
             <li>
                 <a target="" href="/ftp/{{ filepath }}">{{ filepath }}</a>
             </li>
@@ -121,6 +145,17 @@
 {% endif %}
 
 <form>
+    {% if dirList %}
+        {% for filename in dirList %}
+            <label>
+                <input type="checkbox" value="{{ filename }}" name="{{ filename }}">
+                <a target="" href=/ftp/{{ path }}{{ filename }}>{{ filename }}</a>
+                <br>
+            </label>
+        {% endfor %}
+    {% endif %}
+    <br>
+
     {% if fileList %}
         {% for filename in fileList %}
             <label>

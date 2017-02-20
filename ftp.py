@@ -34,7 +34,15 @@ def my_secure_filename(filename):
 
 
 def dir_list(path):
-    return [x for x in os.listdir(path)]
+    fileList = []
+    dirList = []
+    for x in os.listdir(path):
+        if os.path.isfile(os.path.join(path, x)):
+            fileList.append(x)
+        else:
+            dirList.append(x)
+
+    return fileList, dirList
 
 
 def history(currentPath):
@@ -77,59 +85,19 @@ def home_of_no_variable_get():
 
 
 @app.route('/ftp/', methods=['GET'])
-def ftp_of_no_variable_get():
-    currentPath = ''
-    path = os.path.join(CURRENT_DIR, currentPath)
-
-    isUpload = session.get('isUpload', False)
-    session.pop('isUpload', False)
-
-    isSearch = session.get('isSearch', False)
-    session.pop('isSearch', False)
-
-    isCreateDir = session.get('isCreateDir', False)
-    session.pop('isCreateDir', False)
-
-    isCreateFile = session.get('isCreateFile', False)
-    session.pop('isCreateFile', False)
-
-    isCopy = session.get('isCopy', False)
-
-    isMov = session.get('isMov', False)
-
-    searchRes = session.get('searchRes', False)
-    session.pop('searchRes', False)
-
-    fileList = dir_list(path)
-
-    history(currentPath)
-
-    session['currentPath'] = currentPath
-
-    return render_template('base.html',
-                           title=currentPath,
-                           flashPath=currentPath,
-                           isUpload=isUpload,
-                           isSearch=isSearch,
-                           isCreateDir=isCreateDir,
-                           isCreateFile=isCreateFile,
-                           searchRes=searchRes,
-                           path=currentPath,
-                           fileList=fileList,
-                           isCopy=isCopy,
-                           isMov=isMov)
-
-
 @app.route('/ftp/<path:path>', methods=['GET'])
-def ftp_of_variable_get(path):
+def ftp_get(path = ''):
     currentPath = path
     path = os.path.join(CURRENT_DIR, currentPath)
 
     isUpload = session.get('isUpload', False)
     session.pop('isUpload', False)
 
-    isSearch = session.get('isSearch', False)
-    session.pop('isSearch', False)
+    isSearchFile = session.get('isSearchFile', False)
+    session.pop('isSearchFile', False)
+
+    isSearchText = session.get('isSearchText', False)
+    session.pop('isSearchText', False)
 
     isCreateDir = session.get('isCreateDir', False)
     session.pop('isCreateDir', False)
@@ -140,6 +108,12 @@ def ftp_of_variable_get(path):
     isCopy = session.get('isCopy', False)
 
     isMov = session.get('isMov', False)
+
+    searchFileRes = session.get('searchFileRes', False)
+    session.pop('searchFileRes', False)
+
+    searchTextRes = session.get('searchTextRes', False)
+    session.pop('searchTextRes', False)
 
     if os.path.isfile(path):
         format = os.path.splitext(path)[1]
@@ -178,25 +152,30 @@ def ftp_of_variable_get(path):
                                    os.path.split(path)[1],
                                    as_attachment=True)
 
-    searchRes = session.get('searchRes', False)
-    session.pop('searchRes', False)
-
-    fileList = dir_list(path)
+    fileList, dirList = dir_list(path)
 
     history(currentPath)
 
     session['currentPath'] = currentPath
 
+    if currentPath:
+        path = currentPath + '/'
+    else:
+        path = currentPath
+
     return render_template('base.html',
                            title=currentPath,
                            flashPath=currentPath,
                            isUpload=isUpload,
-                           isSearch=isSearch,
+                           isSearchFile=isSearchFile,
+                           isSearchText=isSearchText,
                            isCreateDir=isCreateDir,
                            isCreateFile=isCreateFile,
-                           searchRes=searchRes,
-                           path=currentPath,
+                           searchFileRes=searchFileRes,
+                           searchTextRes=searchTextRes,
+                           path=path,
                            fileList=fileList,
+                           dirList=dirList,
                            isCopy=isCopy,
                            isMov=isMov)
 
@@ -260,26 +239,64 @@ def nextPath_get():
     return redirect('/ftp/%s' % nextPath)
 
 
-@app.route('/search', methods=['GET'])
-def search_get():
+@app.route('/searchFile', methods=['GET'])
+def search_file_get():
     currentPath = session['currentPath']
-    session['isSearch'] = True
+    session['isSearchFile'] = True
     return redirect('/ftp/%s' % currentPath)
 
 
-@app.route('/search', methods=['POST'])
-def search_post():
+@app.route('/searchFile', methods=['POST'])
+def search_file_post():
     currentPath = session['currentPath']
+    session.pop('isSearchFile', False)
 
-    session['searchRes'] = []
+    if not currentPath:
+        walkPath = '.'
+    else:
+        walkPath = currentPath
+
+    session['searchFileRes'] = []
     searchText = request.form['search_text']
-    for dirpath, dirnames, filenames in os.walk('.'):
+    for dirpath, dirnames, filenames in os.walk(walkPath):
         if searchText in dirpath:
-            session['searchRes'].append(dirpath)
+            session['searchFileRes'].append(dirpath)
         for filename in filenames:
             if searchText in filename:
                 filepath = os.path.join(dirpath, filename)
-                session['searchRes'].append(filepath)
+                session['searchFileRes'].append(filepath)
+
+    return redirect('/ftp/%s' % currentPath)
+
+
+@app.route('/searchText', methods=['GET'])
+def search_text_get():
+    currentPath = session['currentPath']
+    session['isSearchText'] = True
+    return redirect('/ftp/%s' % currentPath)
+
+
+@app.route('/searchText', methods=['POST'])
+def search_test_post():
+    currentPath = session['currentPath']
+    session.pop('isSearchText', False)
+
+    if not currentPath:
+        walkPath = '.'
+    else:
+        walkPath = currentPath
+
+    session['searchTextRes'] = []
+    searchText = request.form['search_text']
+    for dirpath, dirnames, filenames in os.walk(walkPath):
+        for filename in filenames:
+            filepath = os.path.join(dirpath, filename)
+            try:
+                with open(filepath, 'r') as f:
+                    if searchText in f.read():
+                        session['searchTextRes'].append(filepath)
+            except:
+                pass
 
     return redirect('/ftp/%s' % currentPath)
 
@@ -426,7 +443,10 @@ def cancel_post():
     currentPath = session['currentPath']
 
     session.pop('isUpload', False)
-    session.pop('isSearch', False)
+    session.pop('isSearchFile', False)
+    session.pop('searchFileRes', False)
+    session.pop('isSearchText', False)
+    session.pop('searchTextRes', False)
     session.pop('isCreateDir', False)
     session.pop('isCreateFile', False)
     session.pop('filePrePath', False)
